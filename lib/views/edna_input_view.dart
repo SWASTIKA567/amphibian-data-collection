@@ -3,7 +3,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/edna_controller.dart';
-import '../models/edna_models.dart';
 import '../theme/app_theme.dart';
 
 class EdnaInputView extends ConsumerStatefulWidget {
@@ -426,7 +425,7 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
             title: 'FASTA Batch File Prediction',
             subtitle:
                 'Upload a .fasta, .fa, or .fna file containing multiple sequences for high-throughput identification.',
-            icon: Icons.filter_dna_rounded,
+            icon: Icons.science_rounded,
           ),
           const SizedBox(height: 20),
 
