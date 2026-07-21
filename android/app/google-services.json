@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "4917446866",
+    "project_id": "amphibians-data-collection",
+    "storage_bucket": "amphibians-data-collection.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:4917446866:android:57959f839f7d2c5962050b",
+        "android_client_info": {
+          "package_name": "com.example.amphibians_data_collection"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw8Ak_1ysx3nbUFoq3Y1uWcEgdg0qCpTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
