@@ -18,6 +18,13 @@ final currentUserProfileProvider = FutureProvider<UserModel?>((ref) async {
   final authState = ref.watch(authStateProvider);
   final user = authState.value;
   if (user == null) return null;
+
+  // Watch the controller state. If it already has the profile for this user, return it.
+  final controllerState = ref.watch(authControllerProvider);
+  if (controllerState.userProfile != null && controllerState.userProfile!.uid == user.uid) {
+    return controllerState.userProfile;
+  }
+
   return ref.read(authServiceProvider).getUserProfile(user.uid);
 });
 
@@ -49,9 +56,9 @@ class AuthState {
 
 // Auth Controller (StateNotifier) in MVC architecture
 class AuthController extends StateNotifier<AuthState> {
-  final AuthService _authService;
+  final AuthService? _authService;
 
-  AuthController(this._authService) : super(const AuthState());
+  AuthController([this._authService]) : super(const AuthState());
 
   void clearError() {
     state = state.copyWith(clearError: true);
@@ -64,11 +71,18 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      await _authService.loginWithEmailAndPassword(
+      final credential = await _authService!.loginWithEmailAndPassword(
         email: email,
         password: password,
       );
-      state = state.copyWith(isLoading: false);
+      
+      final user = credential.user;
+      UserModel? profile;
+      if (user != null) {
+        profile = await _authService!.getUserProfile(user.uid);
+      }
+      
+      state = state.copyWith(isLoading: false, userProfile: profile);
       return true;
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(
@@ -120,7 +134,7 @@ class AuthController extends StateNotifier<AuthState> {
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final userModel = await _authService.registerWithEmailAndPassword(
+      final userModel = await _authService!.registerWithEmailAndPassword(
         name: name,
         email: email,
         password: password,
@@ -145,7 +159,7 @@ class AuthController extends StateNotifier<AuthState> {
   // Handle User Sign Out
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true, clearError: true);
-    await _authService.signOut();
+    await _authService!.signOut();
     state = const AuthState();
   }
 

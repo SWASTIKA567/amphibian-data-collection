@@ -24,13 +24,14 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    User? user;
     try {
       final UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
 
-      final User? user = credential.user;
+      user = credential.user;
       if (user == null) {
         throw FirebaseAuthException(
           code: 'USER_NULL',
@@ -52,9 +53,23 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
 
       return userModel;
-    } on FirebaseAuthException {
+    } on FirebaseAuthException catch (e) {
+      if (user != null) {
+        try {
+          await user.delete();
+        } catch (_) {
+          await _auth.signOut();
+        }
+      }
       rethrow;
     } catch (e) {
+      if (user != null) {
+        try {
+          await user.delete();
+        } catch (_) {
+          await _auth.signOut();
+        }
+      }
       throw Exception('Failed to register user: ${e.toString()}');
     }
   }
@@ -85,7 +100,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      return null;
+      throw Exception('Failed to load user profile: ${e.toString()}');
     }
   }
 

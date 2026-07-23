@@ -14,10 +14,29 @@ class AuthWrapper extends ConsumerWidget {
 
     return authState.when(
       data: (user) {
-        if (user != null) {
-          return const HomeView();
+        if (user == null) {
+          return const LoginView();
         }
-        return const LoginView();
+
+        final profileAsync = ref.watch(currentUserProfileProvider);
+        return profileAsync.when(
+          data: (profile) {
+            if (profile != null) {
+              return const HomeView();
+            }
+
+            // If the user is logged in but has no profile in Firestore, and registration is not in progress,
+            // we have a corrupted/incomplete account. Let's auto-sign them out.
+            final controllerState = ref.watch(authControllerProvider);
+            if (!controllerState.isLoading) {
+              Future.microtask(() => ref.read(authControllerProvider.notifier).signOut());
+            }
+
+            return const LoginView();
+          },
+          loading: () => const LoginView(),
+          error: (error, stack) => const LoginView(),
+        );
       },
       loading: () => const Scaffold(
         backgroundColor: AppTheme.lightMintBackground,
