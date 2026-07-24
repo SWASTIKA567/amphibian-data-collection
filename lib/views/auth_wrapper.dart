@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../theme/app_theme.dart';
-import 'home_view.dart';
+import 'main_navigation_screen.dart';
 import 'login_view.dart';
 
 class AuthWrapper extends ConsumerWidget {
@@ -22,7 +22,7 @@ class AuthWrapper extends ConsumerWidget {
         return profileAsync.when(
           data: (profile) {
             if (profile != null) {
-              return const HomeView();
+              return const MainNavigationScreen();
             }
 
             // If the user is logged in but has no profile in Firestore, and registration is not in progress,

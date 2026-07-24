@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 
 class GeminiSpeciesDescription {
   final String speciesName;
@@ -34,7 +35,7 @@ class GeminiSpeciesDescription {
     // Helper to extract sections from Gemini response text
     String extractSection(String header, String fallback) {
       final regExp = RegExp(
-        '\\*\\*${RegExp.escape(header)}\\*\\*:?\\s*([^\\n*]+|.+?(?=\\n\\s*\\*\\*|\\$))',
+        '\\*\\*${RegExp.escape(header)}\\*\\*:?\\s*([^\\n*]+|.+?(?=\\n\\s*\\*\\*|\$))',
         dotAll: true,
         caseSensitive: false,
       );
@@ -75,8 +76,12 @@ class GeminiSpeciesDescription {
 }
 
 class GeminiApiService {
-  static const String primaryEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-  static const String fallbackEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  // Uses the model name from GeminiConfig so there is a single source of truth.
+  static String get primaryEndpoint =>
+      'https://generativelanguage.googleapis.com/v1beta/models/${GeminiConfig.modelName}:generateContent';
+  // Stable fallback model (gemini-1.5-flash-latest is deprecated and returns 404).
+  static const String fallbackEndpoint =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   Future<GeminiSpeciesDescription> fetchSpeciesDescription({
     required String speciesName,
@@ -116,7 +121,7 @@ Use the exact headers below in bold markdown so key traits can be parsed cleanly
       }
     };
 
-    // Try primary model gemini-2.5-flash, fallback to gemini-1.5-flash if needed
+    // Try primary model gemini-2.0-flash, fallback to gemini-1.5-flash if needed
     try {
       final uri = Uri.parse('$primaryEndpoint?key=${apiKey.trim()}');
       final response = await http.post(
@@ -127,8 +132,9 @@ Use the exact headers below in bold markdown so key traits can be parsed cleanly
 
       if (response.statusCode == 200) {
         return _parseResponse(speciesName, response.body);
-      } else if (response.statusCode == 404) {
-        // Fallback to 1.5-flash if 2.5 is unavailable
+      } else if (_shouldFallback(response.statusCode)) {
+        // Fallback to 1.5-flash if primary is unavailable or quota exceeded
+        debugPrint('Primary model returned ${response.statusCode}, trying fallback...');
         return await _fetchFallback(speciesName, apiKey, bodyJson);
       } else {
         final errorMap = jsonDecode(response.body);
@@ -136,13 +142,17 @@ Use the exact headers below in bold markdown so key traits can be parsed cleanly
         throw Exception('Gemini API error (${response.statusCode}): $msg');
       }
     } catch (e) {
-      debugPrint('Gemini primary request note: $e');
-      if (e.toString().contains('404') || e.toString().contains('not found')) {
-        return await _fetchFallback(speciesName, apiKey, bodyJson);
-      }
+      // Only retry network-level failures (e.g. SocketException, TimeoutException).
+      // HTTP-level errors (4xx/5xx) are already handled above before this catch.
+      debugPrint('Gemini primary network error: $e');
       rethrow;
     }
   }
+
+  /// Returns true if the HTTP status code should trigger a fallback to the
+  /// secondary model (e.g. model not found, quota exceeded).
+  bool _shouldFallback(int statusCode) =>
+      statusCode == 404 || statusCode == 429 || statusCode == 503;
 
   Future<GeminiSpeciesDescription> _fetchFallback(
     String speciesName,

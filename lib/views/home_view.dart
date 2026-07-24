@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/edna_controller.dart';
+import '../controllers/gemini_controller.dart';
 import '../models/edna_models.dart';
 import '../theme/app_theme.dart';
 import 'edna_input_view.dart';
+import 'main_navigation_screen.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
+
+  /// Navigate to Gemini AI tab and auto-fetch description for [speciesName]
+  void _navigateToGemini(BuildContext context, WidgetRef ref, String speciesName) {
+    ref.read(geminiControllerProvider.notifier).selectSpeciesAndFetch(speciesName);
+    ref.read(mainNavGeminiSpeciesProvider.notifier).state = speciesName;
+    ref.read(mainNavIndexProvider.notifier).state = 2;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -109,7 +118,7 @@ class HomeView extends ConsumerWidget {
 
               // ACTIVE OUTPUT SECTION
               if (activeAnalysis != null)
-                _buildActiveAnalysisOutput(context, activeAnalysis)
+                _buildActiveAnalysisOutput(context, ref, activeAnalysis)
               else
                 _buildEmptyOutputCard(context, ref),
 
@@ -292,21 +301,21 @@ class HomeView extends ConsumerWidget {
   // ----------------------------------------------------
   // ACTIVE OUTPUT ROUTER
   // ----------------------------------------------------
-  Widget _buildActiveAnalysisOutput(BuildContext context, EdnaAnalysisRecord record) {
+  Widget _buildActiveAnalysisOutput(BuildContext context, WidgetRef ref, EdnaAnalysisRecord record) {
     switch (record.inputType) {
       case EdnaInputType.singleSequence:
-        return _buildSingleSequenceResultCard(record.singleResult!);
+        return _buildSingleSequenceResultCard(context, ref, record.singleResult!);
       case EdnaInputType.fastaBatch:
-        return _buildFastaBatchResultCard(record.fastaResult!);
+        return _buildFastaBatchResultCard(context, ref, record.fastaResult!);
       case EdnaInputType.csvBatch:
-        return _buildCsvBatchResultCard(record.csvResult!);
+        return _buildCsvBatchResultCard(context, ref, record.csvResult!);
     }
   }
 
   // ----------------------------------------------------
   // OUTPUT VIEW 1: SINGLE SEQUENCE RESULT
   // ----------------------------------------------------
-  Widget _buildSingleSequenceResultCard(PredictionResponse response) {
+  Widget _buildSingleSequenceResultCard(BuildContext context, WidgetRef ref, PredictionResponse response) {
     final confPercent = (response.confidence * 100).toStringAsFixed(1);
 
     return Container(
@@ -367,13 +376,56 @@ class HomeView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            response.predictedSpecies,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.primaryDarkGreen,
+          InkWell(
+            onTap: () => _navigateToGemini(context, ref, response.predictedSpecies),
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    response.predictedSpecies,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
+                      color: AppTheme.primaryDarkGreen,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppTheme.primaryGreen, size: 22),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Gemini AI Description Button
+          GestureDetector(
+            onTap: () => _navigateToGemini(context, ref, response.predictedSpecies),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1565C0), Color(0xFF6A1B9A)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'View Gemini AI Description',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -463,7 +515,7 @@ class HomeView extends ConsumerWidget {
   // ----------------------------------------------------
   // OUTPUT VIEW 2: FASTA BATCH RESULT
   // ----------------------------------------------------
-  Widget _buildFastaBatchResultCard(BatchPredictionResponse response) {
+  Widget _buildFastaBatchResultCard(BuildContext context, WidgetRef ref, BatchPredictionResponse response) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -558,13 +610,23 @@ class HomeView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   if (res != null) ...[
-                    Text(
-                      res.predictedSpecies,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
+                    GestureDetector(
+                      onTap: () => _navigateToGemini(context, ref, res.predictedSpecies),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              res.predictedSpecies,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDarkGreen,
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.auto_awesome_rounded, color: Color(0xFF6A1B9A), size: 18),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -596,7 +658,7 @@ class HomeView extends ConsumerWidget {
   // ----------------------------------------------------
   // OUTPUT VIEW 3: CSV BATCH ACCURACY RESULT
   // ----------------------------------------------------
-  Widget _buildCsvBatchResultCard(CsvBatchPredictionResponse response) {
+  Widget _buildCsvBatchResultCard(BuildContext context, WidgetRef ref, CsvBatchPredictionResponse response) {
     final accuracyStr = response.accuracy != null
         ? '${(response.accuracy! * 100).toStringAsFixed(1)}%'
         : 'N/A';
@@ -751,15 +813,36 @@ class HomeView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    'Predicted: ${res?.predictedSpecies ?? "Error"}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                  if (res != null)
+                    GestureDetector(
+                      onTap: () => _navigateToGemini(context, ref, res.predictedSpecies),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Predicted: ${res.predictedSpecies}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDarkGreen,
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.auto_awesome_rounded, color: Color(0xFF6A1B9A), size: 18),
+                        ],
+                      ),
+                    )
+                  else
+                    const Text(
+                      'Predicted: Error',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.errorRed,
+                      ),
                     ),
-                  ),
                 ],
               ),
             );
