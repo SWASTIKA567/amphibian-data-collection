@@ -489,19 +489,108 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
                   color: AppTheme.white.withValues(alpha: 0.9),
                 ),
               ),
+              if (desc.sequenceCount != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.dns_rounded, size: 14, color: AppTheme.white),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${desc.sequenceCount} Reference Sequences on File',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
 
         const SizedBox(height: 20),
 
+        // Taxonomy Breakdown Card
+        if (desc.order != null || desc.family != null || desc.genus != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.6)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.account_tree_rounded, color: AppTheme.primaryGreen, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Taxonomic Classification',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (desc.order != null)
+                      Expanded(child: _buildTaxonChip('Order', desc.order!)),
+                    if (desc.family != null)
+                      Expanded(child: _buildTaxonChip('Family', desc.family!)),
+                    if (desc.genus != null)
+                      Expanded(child: _buildTaxonChip('Genus', desc.genus!)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
         // Overview Section
         _buildInfoCard(
           icon: Icons.notes_rounded,
-          title: 'Overview',
+          title: 'Description / Overview',
           content: desc.overview,
         ),
         const SizedBox(height: 14),
+
+        // Habitat Section
+        if (desc.habitat != null && desc.habitat!.isNotEmpty) ...[
+          _buildInfoCard(
+            icon: Icons.water_drop_rounded,
+            title: 'Habitat & Ecosystem',
+            content: desc.habitat!,
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        // Geographic Range Section
+        if (desc.geographicRange != null && desc.geographicRange!.isNotEmpty) ...[
+          _buildInfoCard(
+            icon: Icons.public_rounded,
+            title: 'Geographic Range & Origin',
+            content: desc.geographicRange!,
+          ),
+          const SizedBox(height: 14),
+        ],
 
         // Conservation Status Section
         _buildInfoCard(
@@ -543,6 +632,33 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildTaxonChip(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.lightMintBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryDarkGreen),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 
