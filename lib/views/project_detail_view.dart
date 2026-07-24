@@ -89,14 +89,18 @@ class _ProjectDetailViewState extends ConsumerState<ProjectDetailView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Contributions & Research (${currentProject.contributions.length})',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                  Expanded(
+                    child: Text(
+                      'Contributions & Research (${currentProject.contributions.length})',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textDark,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () => _showAddContributionModal(context, currentProject),
                     style: ElevatedButton.styleFrom(
