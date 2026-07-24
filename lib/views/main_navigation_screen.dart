@@ -7,7 +7,9 @@ import 'gemini_species_view.dart';
 
 /// A global provider that allows any widget to switch tabs and pass a species name
 final mainNavIndexProvider = StateProvider<int>((ref) => 0);
-final mainNavGeminiSpeciesProvider = StateProvider<String?>((ref) => null);
+final mainNavSpeciesProvider = StateProvider<String?>((ref) => null);
+// Alias for backwards compatibility
+final mainNavGeminiSpeciesProvider = mainNavSpeciesProvider;
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
@@ -28,7 +30,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(mainNavIndexProvider);
-    final pendingSpecies = ref.watch(mainNavGeminiSpeciesProvider);
+    final pendingSpecies = ref.watch(mainNavSpeciesProvider);
 
     // Listen to nav index changes and animate page
     ref.listen<int>(mainNavIndexProvider, (prev, next) {
@@ -48,7 +50,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         children: [
           const HomeView(),
           const EdnaInputView(),
-          GeminiSpeciesView(
+          SpeciesInfoView(
             initialSpecies: pendingSpecies,
           ),
         ],
@@ -98,11 +100,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
           NavigationDestination(
             icon: Icon(
-              Icons.auto_awesome_outlined,
+              Icons.travel_explore_outlined,
               color: currentIndex == 2 ? AppTheme.primaryGreen : AppTheme.textMuted,
             ),
-            selectedIcon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryGreen),
-            label: 'Gemini AI',
+            selectedIcon: const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen),
+            label: 'Species Info',
           ),
         ],
       ),

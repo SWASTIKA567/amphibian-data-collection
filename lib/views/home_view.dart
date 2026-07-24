@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/edna_controller.dart';
-import '../controllers/gemini_controller.dart';
+import '../controllers/species_info_controller.dart';
 import '../models/edna_models.dart';
 import '../theme/app_theme.dart';
 import 'edna_input_view.dart';
@@ -11,10 +11,10 @@ import 'main_navigation_screen.dart';
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
 
-  /// Navigate to Gemini AI tab and auto-fetch description for [speciesName]
-  void _navigateToGemini(BuildContext context, WidgetRef ref, String speciesName) {
-    ref.read(geminiControllerProvider.notifier).selectSpeciesAndFetch(speciesName);
-    ref.read(mainNavGeminiSpeciesProvider.notifier).state = speciesName;
+  /// Navigate to Species Info tab and auto-fetch description for [speciesName]
+  void _navigateToSpeciesInfo(BuildContext context, WidgetRef ref, String speciesName) {
+    ref.read(speciesInfoControllerProvider.notifier).selectSpeciesAndFetch(speciesName);
+    ref.read(mainNavSpeciesProvider.notifier).state = speciesName;
     ref.read(mainNavIndexProvider.notifier).state = 2;
   }
 
@@ -377,7 +377,7 @@ class HomeView extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           InkWell(
-            onTap: () => _navigateToGemini(context, ref, response.predictedSpecies),
+            onTap: () => _navigateToSpeciesInfo(context, ref, response.predictedSpecies),
             borderRadius: BorderRadius.circular(8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -398,14 +398,14 @@ class HomeView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Gemini AI Description Button
+          // Species Info Button
           GestureDetector(
-            onTap: () => _navigateToGemini(context, ref, response.predictedSpecies),
+            onTap: () => _navigateToSpeciesInfo(context, ref, response.predictedSpecies),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF1565C0), Color(0xFF6A1B9A)],
+                  colors: [AppTheme.primaryGreen, AppTheme.primaryDarkGreen],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -414,10 +414,10 @@ class HomeView extends ConsumerWidget {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+                  Icon(Icons.travel_explore_rounded, color: Colors.white, size: 16),
                   SizedBox(width: 6),
                   Text(
-                    'View Gemini AI Description',
+                    'View Species Info',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -611,7 +611,7 @@ class HomeView extends ConsumerWidget {
                   const SizedBox(height: 6),
                   if (res != null) ...[
                     GestureDetector(
-                      onTap: () => _navigateToGemini(context, ref, res.predictedSpecies),
+                      onTap: () => _navigateToSpeciesInfo(context, ref, res.predictedSpecies),
                       child: Row(
                         children: [
                           Expanded(
@@ -625,7 +625,7 @@ class HomeView extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          const Icon(Icons.auto_awesome_rounded, color: Color(0xFF6A1B9A), size: 18),
+                          const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen, size: 18),
                         ],
                       ),
                     ),
@@ -815,7 +815,7 @@ class HomeView extends ConsumerWidget {
                   const SizedBox(height: 2),
                   if (res != null)
                     GestureDetector(
-                      onTap: () => _navigateToGemini(context, ref, res.predictedSpecies),
+                      onTap: () => _navigateToSpeciesInfo(context, ref, res.predictedSpecies),
                       child: Row(
                         children: [
                           Expanded(
@@ -829,7 +829,7 @@ class HomeView extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          const Icon(Icons.auto_awesome_rounded, color: Color(0xFF6A1B9A), size: 18),
+                          const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen, size: 18),
                         ],
                       ),
                     )
