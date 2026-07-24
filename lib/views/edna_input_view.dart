@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/edna_controller.dart';
 import '../theme/app_theme.dart';
+import 'main_navigation_screen.dart';
 
 class EdnaInputView extends ConsumerStatefulWidget {
   const EdnaInputView({super.key});
@@ -125,6 +126,19 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
     }
   }
 
+  /// Navigate to Results tab or pop if pushed as a modal route.
+  /// Uses ModalRoute.isFirst to safely distinguish tab vs pushed route.
+  void _navigateToResults() {
+    final isRootRoute = ModalRoute.of(context)?.isFirst ?? true;
+    if (!isRootRoute) {
+      // Was pushed via Navigator.push — safe to pop
+      Navigator.pop(context);
+    } else {
+      // Is a tab in PageView — switch to Results tab (index 0)
+      ref.read(mainNavIndexProvider.notifier).state = 0;
+    }
+  }
+
   Future<void> _submitSingleSequence() async {
     final seq = _sequenceController.text.trim();
     if (seq.isEmpty) {
@@ -147,10 +161,10 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.primaryGreen,
-            content: Text('Analysis complete! Redirecting to Home...'),
+            content: Text('Analysis complete! Switching to Results...'),
           ),
         );
-        Navigator.pop(context);
+        _navigateToResults();
       }
     }
   }
@@ -188,10 +202,10 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.primaryGreen,
-            content: Text('FASTA Batch Analysis complete! Redirecting to Home...'),
+            content: Text('FASTA Batch Analysis complete! Switching to Results...'),
           ),
         );
-        Navigator.pop(context);
+        _navigateToResults();
       }
     }
   }
@@ -229,10 +243,10 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.primaryGreen,
-            content: Text('CSV Batch Analysis complete! Redirecting to Home...'),
+            content: Text('CSV Batch Analysis complete! Switching to Results...'),
           ),
         );
-        Navigator.pop(context);
+        _navigateToResults();
       }
     }
   }
