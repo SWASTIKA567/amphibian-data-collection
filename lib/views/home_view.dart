@@ -1189,16 +1189,24 @@ class HomeView extends ConsumerWidget {
   }
 
   Widget _buildDetailChip(String label, String value) {
+    final isFamily = label.toLowerCase() == 'family';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderGreen),
+        color: isFamily ? AppTheme.primaryGreen.withValues(alpha: 0.1) : AppTheme.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isFamily ? AppTheme.primaryGreen : AppTheme.borderGreen,
+          width: isFamily ? 1.5 : 1.0,
+        ),
       ),
       child: Text(
         '$label: $value',
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDarkGreen),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: isFamily ? AppTheme.primaryDarkGreen : AppTheme.primaryGreen,
+        ),
       ),
     );
   }

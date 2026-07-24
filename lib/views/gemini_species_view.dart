@@ -669,19 +669,21 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
         final nameParts = desc.speciesName.split(' ');
         genus = nameParts.isNotEmpty ? nameParts[0] : desc.speciesName;
       }
+      if (order.isEmpty) order = 'Anura';
+      if (family.isEmpty) family = 'Amphibia';
     }
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.04),
-            blurRadius: 10,
+            color: AppTheme.primaryGreen.withValues(alpha: 0.05),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
@@ -691,72 +693,85 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
         children: [
           const Row(
             children: [
-              Icon(Icons.account_tree_rounded, color: AppTheme.primaryGreen, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.account_tree_rounded, color: AppTheme.primaryGreen, size: 22),
+              SizedBox(width: 10),
               Text(
                 'Taxonomic Classification',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textDark,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _buildTaxonomicItemBox('Order', order, Icons.category_rounded),
-              const SizedBox(width: 8),
-              _buildTaxonomicItemBox('Family', family, Icons.biotech_rounded),
-              const SizedBox(width: 8),
-              _buildTaxonomicItemBox('Genus', genus, Icons.eco_rounded),
-            ],
-          ),
+          const SizedBox(height: 16),
+          _buildTaxonomyItemRow('Order', order, Icons.category_rounded, Colors.teal),
+          const SizedBox(height: 10),
+          _buildTaxonomyItemRow('Family', family, Icons.biotech_rounded, AppTheme.primaryGreen, isHighlight: true),
+          const SizedBox(height: 10),
+          _buildTaxonomyItemRow('Genus', genus, Icons.eco_rounded, Colors.green.shade800),
         ],
       ),
     );
   }
 
-  Widget _buildTaxonomicItemBox(String label, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.lightMintBackground,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+  Widget _buildTaxonomyItemRow(String rank, String value, IconData icon, Color color, {bool isHighlight = false}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isHighlight
+            ? AppTheme.primaryGreen.withValues(alpha: 0.08)
+            : AppTheme.lightMintBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlight
+              ? AppTheme.primaryGreen.withValues(alpha: 0.4)
+              : AppTheme.borderGreen.withValues(alpha: 0.5),
+          width: isHighlight ? 1.5 : 1.0,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 12, color: AppTheme.primaryGreen),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 4),
-            Text(
-              value.isNotEmpty ? value : 'Amphibia',
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 64,
+            child: Text(
+              rank,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryDarkGreen,
+                color: AppTheme.textMuted,
               ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
             ),
-          ],
-        ),
+          ),
+          Container(
+            height: 16,
+            width: 1,
+            color: AppTheme.borderGreen,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                fontStyle: rank == 'Genus' ? FontStyle.italic : FontStyle.normal,
+                color: isHighlight ? AppTheme.primaryDarkGreen : AppTheme.textDark,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

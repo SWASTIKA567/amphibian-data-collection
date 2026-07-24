@@ -534,57 +534,96 @@ class _SpeciesDetailScreenState extends ConsumerState<SpeciesDetailScreen> {
   }
 
   Widget _buildTaxonomyCard(SpeciesInfo? info) {
-    final order = info?.order ?? widget.directDetails?.order ?? 'Anura';
-    final family = info?.family ?? widget.directDetails?.family ?? 'Amphibian';
-    final genus = info?.genus ?? widget.directDetails?.genus ?? widget.speciesName.split(' ').first;
+    String order = info?.order ?? widget.directDetails?.order ?? '';
+    String family = info?.family ?? widget.directDetails?.family ?? '';
+    String genus = info?.genus ?? widget.directDetails?.genus ?? '';
+
+    if (order.isEmpty || family.isEmpty || genus.isEmpty) {
+      if (info != null) {
+        final parts = info.taxonomy.split('·').map((e) => e.trim()).toList();
+        if (order.isEmpty && parts.isNotEmpty) order = parts[0];
+        if (family.isEmpty && parts.length > 1) family = parts[1];
+        if (genus.isEmpty && parts.length > 2) genus = parts[2];
+      }
+      if (genus.isEmpty) {
+        final nameParts = widget.speciesName.split(' ');
+        genus = nameParts.isNotEmpty ? nameParts[0] : widget.speciesName;
+      }
+      if (order.isEmpty) order = 'Anura';
+      if (family.isEmpty) family = 'Amphibia';
+    }
 
     return _buildSectionCard(
       icon: Icons.account_tree_rounded,
       title: 'Taxonomic Classification',
-      child: Row(
+      child: Column(
         children: [
-          _buildTaxonomyBox('Order', order),
-          const SizedBox(width: 8),
-          _buildTaxonomyBox('Family', family),
-          const SizedBox(width: 8),
-          _buildTaxonomyBox('Genus', genus),
+          _buildTaxonomyRow('Order', order, Icons.category_rounded, Colors.teal),
+          const SizedBox(height: 10),
+          _buildTaxonomyRow('Family', family, Icons.biotech_rounded, AppTheme.primaryGreen, isHighlight: true),
+          const SizedBox(height: 10),
+          _buildTaxonomyRow('Genus', genus, Icons.eco_rounded, Colors.green.shade800),
         ],
       ),
     );
   }
 
-  Widget _buildTaxonomyBox(String label, String value) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.lightMintBackground,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+  Widget _buildTaxonomyRow(String rank, String value, IconData icon, Color color, {bool isHighlight = false}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isHighlight
+            ? AppTheme.primaryGreen.withValues(alpha: 0.08)
+            : AppTheme.lightMintBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlight
+              ? AppTheme.primaryGreen.withValues(alpha: 0.4)
+              : AppTheme.borderGreen.withValues(alpha: 0.5),
+          width: isHighlight ? 1.5 : 1.0,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 64,
+            child: Text(
+              rank,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textMuted,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              value.isNotEmpty ? value : 'N/A',
-              style: const TextStyle(
-                fontSize: 13,
+          ),
+          Container(
+            height: 16,
+            width: 1,
+            color: AppTheme.borderGreen,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: TextStyle(
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryDarkGreen,
+                fontStyle: rank == 'Genus' ? FontStyle.italic : FontStyle.normal,
+                color: isHighlight ? AppTheme.primaryDarkGreen : AppTheme.textDark,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
