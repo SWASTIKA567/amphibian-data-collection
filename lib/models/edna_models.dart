@@ -240,6 +240,7 @@ class EdnaAnalysisRecord {
   final DateTime timestamp;
   final EdnaInputType inputType;
   final String title;
+  final bool isPublic;
   final PredictionResponse? singleResult;
   final BatchPredictionResponse? fastaResult;
   final CsvBatchPredictionResponse? csvResult;
@@ -249,8 +250,52 @@ class EdnaAnalysisRecord {
     required this.timestamp,
     required this.inputType,
     required this.title,
+    this.isPublic = false,
     this.singleResult,
     this.fastaResult,
     this.csvResult,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'timestamp': timestamp.toIso8601String(),
+      'inputType': inputType.name,
+      'title': title,
+      'isPublic': isPublic,
+      if (singleResult != null) 'singleResult': singleResult!.toJson(),
+      if (fastaResult != null) 'fastaResult': fastaResult!.results.map((r) => r.result?.toJson()).toList(),
+      if (csvResult != null) 'csvResult': csvResult!.results.map((r) => r.result?.toJson()).toList(),
+    };
+  }
+
+  factory EdnaAnalysisRecord.fromMap(Map<String, dynamic> map) {
+    DateTime ts = DateTime.now();
+    if (map['timestamp'] != null) {
+      ts = DateTime.tryParse(map['timestamp'].toString()) ?? DateTime.now();
+    }
+
+    EdnaInputType type = EdnaInputType.singleSequence;
+    if (map['inputType'] != null) {
+      type = EdnaInputType.values.firstWhere(
+        (e) => e.name == map['inputType'],
+        orElse: () => EdnaInputType.singleSequence,
+      );
+    }
+
+    PredictionResponse? single;
+    if (map['singleResult'] != null && map['singleResult'] is Map<String, dynamic>) {
+      single = PredictionResponse.fromJson(map['singleResult'] as Map<String, dynamic>);
+    }
+
+    return EdnaAnalysisRecord(
+      id: map['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: ts,
+      inputType: type,
+      title: map['title']?.toString() ?? 'Analysis Record',
+      isPublic: map['isPublic'] as bool? ?? false,
+      singleResult: single,
+    );
+  }
 }
+
