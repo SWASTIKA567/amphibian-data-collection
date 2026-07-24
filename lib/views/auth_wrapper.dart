@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/edna_controller.dart';
 import '../theme/app_theme.dart';
 import 'main_navigation_screen.dart';
 import 'login_view.dart';
@@ -15,6 +16,10 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user == null) {
+          // User logged out — clear saved eDNA analysis history from state
+          Future.microtask(() {
+            ref.read(ednaControllerProvider.notifier).clearHistory();
+          });
           return const LoginView();
         }
 
@@ -22,6 +27,10 @@ class AuthWrapper extends ConsumerWidget {
         return profileAsync.when(
           data: (profile) {
             if (profile != null) {
+              // User logged in — restore their analysis history from Firestore
+              Future.microtask(() {
+                ref.read(ednaControllerProvider.notifier).loadUserHistory(user.uid);
+              });
               return const MainNavigationScreen();
             }
 

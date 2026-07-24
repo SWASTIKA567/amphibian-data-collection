@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import 'home_view.dart';
 import 'edna_input_view.dart';
 import 'gemini_species_view.dart';
+import 'projects_community_view.dart';
 
 /// A global provider that allows any widget to switch tabs and pass a species name
 final mainNavIndexProvider = StateProvider<int>((ref) => 0);
@@ -53,6 +54,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           SpeciesInfoView(
             initialSpecies: pendingSpecies,
           ),
+          const ProjectsCommunityView(),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(currentIndex),
@@ -105,6 +107,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             ),
             selectedIcon: const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen),
             label: 'Species Info',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.hub_outlined,
+              color: currentIndex == 3 ? AppTheme.primaryGreen : AppTheme.textMuted,
+            ),
+            selectedIcon: const Icon(Icons.hub_rounded, color: AppTheme.primaryGreen),
+            label: 'Community',
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/auth_controller.dart';
 import '../controllers/edna_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -133,10 +134,12 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
       return;
     }
 
+    final uid = ref.read(authStateProvider).value?.uid;
     final success = await ref.read(ednaControllerProvider.notifier).analyzeSingleSequence(
           sequence: seq,
           confidenceThreshold: _singleConfidenceThreshold,
           confusionGap: _singleConfusionGap,
+          uid: uid,
         );
 
     if (mounted) {
@@ -171,11 +174,13 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
       return;
     }
 
+    final uid = ref.read(authStateProvider).value?.uid;
     final success = await ref.read(ednaControllerProvider.notifier).analyzeFastaBatch(
           fileBytes: bytes,
           fileName: name,
           confidenceThreshold: _fastaConfidenceThreshold,
           confusionGap: _fastaConfusionGap,
+          uid: uid,
         );
 
     if (mounted) {
@@ -210,11 +215,13 @@ rec_003,Rana temporaria,TGACTACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGC''';
       return;
     }
 
+    final uid = ref.read(authStateProvider).value?.uid;
     final success = await ref.read(ednaControllerProvider.notifier).analyzeCsvBatch(
           fileBytes: bytes,
           fileName: name,
           confidenceThreshold: _csvConfidenceThreshold,
           confusionGap: _csvConfusionGap,
+          uid: uid,
         );
 
     if (mounted) {

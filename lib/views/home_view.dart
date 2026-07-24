@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/edna_controller.dart';
+import '../controllers/project_controller.dart';
 import '../controllers/species_info_controller.dart';
 import '../models/edna_models.dart';
 import '../theme/app_theme.dart';
 import 'edna_input_view.dart';
+import 'main_navigation_screen.dart';
 import 'species_detail_screen.dart';
 
 class HomeView extends ConsumerWidget {
@@ -42,6 +44,7 @@ class HomeView extends ConsumerWidget {
     final firebaseUser = ref.watch(authStateProvider).value;
     final ednaState = ref.watch(ednaControllerProvider);
     final activeAnalysis = ednaState.activeAnalysis;
+    final projectsAsync = ref.watch(projectsStreamProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.lightMintBackground,
@@ -97,7 +100,17 @@ class HomeView extends ConsumerWidget {
               // Welcome Header Banner
               _buildHeaderCard(ref, userProfileAsync, firebaseUser),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Saved Progress Summary (shows restored sessions and analysis count)
+              _buildProgressSummaryCard(ednaState),
+
+              const SizedBox(height: 20),
+
+              // Community Projects Quick-Access Widget
+              _buildCommunityQuickAccess(context, ref, projectsAsync),
+
+              const SizedBox(height: 20),
 
               // Action Bar / Navigation to Input
               Row(
@@ -157,6 +170,180 @@ class HomeView extends ConsumerWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------------------------------
+  // SAVED PROGRESS SUMMARY CARD
+  // ----------------------------------------------------
+  Widget _buildProgressSummaryCard(EdnaState ednaState) {
+    final count = ednaState.history.length;
+    final isRestored = ednaState.historyLoaded && count > 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryGreen.withValues(alpha: 0.08),
+            AppTheme.accentMint,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              isRestored ? Icons.restore_rounded : Icons.history_edu_rounded,
+              color: AppTheme.primaryGreen,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isRestored ? 'Session Progress Restored' : 'Analysis Progress',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppTheme.primaryDarkGreen,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  count == 0
+                      ? 'No analyses saved yet. Run your first eDNA sequence.'
+                      : '$count saved ${count == 1 ? "analysis" : "analyses"} — progress is saved across sessions.',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppTheme.textDark,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Badge
+          if (isRestored)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppTheme.white,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------------------------------------------
+  // COMMUNITY PROJECTS QUICK-ACCESS WIDGET
+  // ----------------------------------------------------
+  Widget _buildCommunityQuickAccess(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<dynamic>> projectsAsync,
+  ) {
+    final publicCount = projectsAsync.when(
+      data: (list) => list.where((p) => (p as dynamic).isPublic == true).length,
+      loading: () => 0,
+      error: (_, _) => 0,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        // Switch to Community Projects tab (index 3)
+        ref.read(mainNavIndexProvider.notifier).state = 3;
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.4)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryGreen.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppTheme.primaryGreen, AppTheme.primaryDarkGreen],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.hub_rounded, color: AppTheme.white, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Open Research Community',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppTheme.primaryDarkGreen,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$publicCount open projects available · Share your research, sequences & files',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGreen, size: 16),
+          ],
         ),
       ),
     );
@@ -297,8 +484,10 @@ class HomeView extends ConsumerWidget {
           ElevatedButton.icon(
             onPressed: () async {
               // Quick test run directly!
+              final uid = ref.read(authStateProvider).value?.uid;
               await ref.read(ednaControllerProvider.notifier).analyzeSingleSequence(
                     sequence: 'ACGTACGTTGCAACGTGGCATCGATCGATCGTAGCTAGCTAGCTGACT',
+                    uid: uid,
                   );
             },
             style: ElevatedButton.styleFrom(

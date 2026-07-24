@@ -11,8 +11,8 @@ final projectServiceProvider = Provider<ProjectService>((ref) {
 // Stream of projects filtered for current user
 final projectsStreamProvider = StreamProvider<List<ProjectModel>>((ref) {
   final projectService = ref.watch(projectServiceProvider);
-  final userProfile = ref.watch(currentUserProfileProvider).value;
-  final uid = userProfile?.uid ?? '';
+  final authUser = ref.watch(authStateProvider).value;
+  final uid = authUser?.uid ?? '';
   return projectService.streamProjects(currentUserUid: uid);
 });
 

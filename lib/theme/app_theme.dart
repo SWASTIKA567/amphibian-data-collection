@@ -13,6 +13,7 @@ class AppTheme {
   static const Color inputFillColor = Color(0xFFF7FCF9);
   static const Color borderGreen = Color(0xFFA5D6A7);
   static const Color errorRed = Color(0xFFD32F2F);
+  static const Color accentMint = Color(0xFFE8F5E9);
 
   static ThemeData get lightTheme {
     return ThemeData(

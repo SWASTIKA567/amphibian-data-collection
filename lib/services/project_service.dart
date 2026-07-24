@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../models/project_model.dart';
 
 class ProjectService {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestore;
 
   // In-memory fallback list to ensure seamless offline or initial dev operation
   static final List<ProjectModel> _localFallbackProjects = [
@@ -89,47 +89,83 @@ class ProjectService {
   ];
 
   ProjectService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore;
+
+  FirebaseFirestore? get _db {
+    if (_firestore != null) return _firestore;
+    try {
+      return FirebaseFirestore.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Create a new project in Firestore
   Future<void> createProject(ProjectModel project) async {
-    try {
-      final docRef = _firestore.collection('projects').doc(project.id);
-      await docRef.set(project.toMap());
-    } catch (e) {
-      debugPrint('Firestore write note: $e');
-      // Save to local fallback list if Firestore is unavailable
-      final index = _localFallbackProjects.indexWhere((p) => p.id == project.id);
-      if (index >= 0) {
-        _localFallbackProjects[index] = project;
-      } else {
-        _localFallbackProjects.insert(0, project);
+    final db = _db;
+    if (db != null) {
+      try {
+        final docRef = db.collection('projects').doc(project.id);
+        await docRef.set(project.toMap());
+        return;
+      } catch (e) {
+        debugPrint('Firestore write note: $e');
       }
+    }
+    // Save to local fallback list if Firestore is unavailable
+    final index = _localFallbackProjects.indexWhere((p) => p.id == project.id);
+    if (index >= 0) {
+      _localFallbackProjects[index] = project;
+    } else {
+      _localFallbackProjects.insert(0, project);
     }
   }
 
   /// Stream active projects (Public projects + Private projects belonging to currentUserUid)
   Stream<List<ProjectModel>> streamProjects({required String currentUserUid}) {
-    try {
-      return _firestore.collection('projects').snapshots().map((snapshot) {
-        if (snapshot.docs.isEmpty && _localFallbackProjects.isNotEmpty) {
-          // If Firestore collection is empty, return local fallback projects
-          return _filterProjects(_localFallbackProjects, currentUserUid);
-        }
-
-        final List<ProjectModel> projects = snapshot.docs.map((doc) {
-          return ProjectModel.fromMap(doc.data(), docId: doc.id);
-        }).toList();
-
-        return _filterProjects(projects, currentUserUid);
-      }).handleError((error) {
-        debugPrint('Firestore stream error fallback: $error');
-        return _filterProjects(_localFallbackProjects, currentUserUid);
-      });
-    } catch (e) {
-      debugPrint('Firestore stream error: $e');
+    final db = _db;
+    if (db == null) {
       return Stream.value(_filterProjects(_localFallbackProjects, currentUserUid));
     }
+
+    final controller = StreamController<List<ProjectModel>>();
+
+    // Emit local fallback projects immediately so the UI is never stuck in AsyncLoading
+    controller.add(_filterProjects(_localFallbackProjects, currentUserUid));
+
+    try {
+      final subscription = db.collection('projects').snapshots().listen(
+        (snapshot) {
+          if (!controller.isClosed) {
+            if (snapshot.docs.isNotEmpty) {
+              final List<ProjectModel> projects = snapshot.docs.map((doc) {
+                return ProjectModel.fromMap(doc.data(), docId: doc.id);
+              }).toList();
+              controller.add(_filterProjects(projects, currentUserUid));
+            } else {
+              controller.add(_filterProjects(_localFallbackProjects, currentUserUid));
+            }
+          }
+        },
+        onError: (error) {
+          debugPrint('Firestore stream error fallback: $error');
+          if (!controller.isClosed) {
+            controller.add(_filterProjects(_localFallbackProjects, currentUserUid));
+          }
+        },
+      );
+
+      controller.onCancel = () {
+        subscription.cancel();
+      };
+    } catch (e) {
+      debugPrint('Firestore stream exception: $e');
+      if (!controller.isClosed) {
+        controller.add(_filterProjects(_localFallbackProjects, currentUserUid));
+      }
+    }
+
+    return controller.stream;
   }
 
   /// Add a research contribution (notes, files, details) to a project
@@ -137,27 +173,30 @@ class ProjectService {
     required String projectId,
     required ContributionModel contribution,
   }) async {
-    try {
-      final docRef = _firestore.collection('projects').doc(projectId);
-      final doc = await docRef.get();
+    final db = _db;
+    if (db != null) {
+      try {
+        final docRef = db.collection('projects').doc(projectId);
+        final doc = await docRef.get();
 
-      if (doc.exists && doc.data() != null) {
-        final project = ProjectModel.fromMap(doc.data()!, docId: doc.id);
-        final updatedContributions = [contribution, ...project.contributions];
-        final updatedAttachedFiles = [
-          ...project.attachedFiles,
-          ...contribution.attachedFiles
-        ];
+        if (doc.exists && doc.data() != null) {
+          final project = ProjectModel.fromMap(doc.data()!, docId: doc.id);
+          final updatedContributions = [contribution, ...project.contributions];
+          final updatedAttachedFiles = [
+            ...project.attachedFiles,
+            ...contribution.attachedFiles
+          ];
 
-        await docRef.update({
-          'contributions': updatedContributions.map((c) => c.toMap()).toList(),
-          'attachedFiles': updatedAttachedFiles.map((f) => f.toMap()).toList(),
-          'updatedAt': Timestamp.fromDate(DateTime.now()),
-        });
-        return;
+          await docRef.update({
+            'contributions': updatedContributions.map((c) => c.toMap()).toList(),
+            'attachedFiles': updatedAttachedFiles.map((f) => f.toMap()).toList(),
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
+          return;
+        }
+      } catch (e) {
+        debugPrint('Firestore update note: $e');
       }
-    } catch (e) {
-      debugPrint('Firestore update note: $e');
     }
 
     // Local fallback update
@@ -178,29 +217,36 @@ class ProjectService {
     required String projectId,
     required bool isPublic,
   }) async {
-    try {
-      await _firestore.collection('projects').doc(projectId).update({
-        'isPublic': isPublic,
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
-    } catch (e) {
-      debugPrint('Firestore privacy toggle note: $e');
-      final idx = _localFallbackProjects.indexWhere((p) => p.id == projectId);
-      if (idx >= 0) {
-        _localFallbackProjects[idx] = _localFallbackProjects[idx].copyWith(
-          isPublic: isPublic,
-          updatedAt: DateTime.now(),
-        );
+    final db = _db;
+    if (db != null) {
+      try {
+        await db.collection('projects').doc(projectId).update({
+          'isPublic': isPublic,
+          'updatedAt': Timestamp.fromDate(DateTime.now()),
+        });
+        return;
+      } catch (e) {
+        debugPrint('Firestore privacy toggle note: $e');
       }
+    }
+    final idx = _localFallbackProjects.indexWhere((p) => p.id == projectId);
+    if (idx >= 0) {
+      _localFallbackProjects[idx] = _localFallbackProjects[idx].copyWith(
+        isPublic: isPublic,
+        updatedAt: DateTime.now(),
+      );
     }
   }
 
   /// Delete a project
   Future<void> deleteProject(String projectId) async {
-    try {
-      await _firestore.collection('projects').doc(projectId).delete();
-    } catch (e) {
-      debugPrint('Firestore delete note: $e');
+    final db = _db;
+    if (db != null) {
+      try {
+        await db.collection('projects').doc(projectId).delete();
+      } catch (e) {
+        debugPrint('Firestore delete note: $e');
+      }
     }
     _localFallbackProjects.removeWhere((p) => p.id == projectId);
   }

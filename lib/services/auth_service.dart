@@ -53,7 +53,7 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
 
       return userModel;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (_) {
       if (user != null) {
         try {
           await user.delete();
