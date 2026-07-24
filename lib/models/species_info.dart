@@ -1,21 +1,23 @@
-/// Data model for a species lookup result from eDNA Database API, iNaturalist, or Wikipedia.
+import 'edna_models.dart';
+
+/// Data model for a species lookup result from eDNA Model Prediction, iNaturalist, or Wikipedia.
 class SpeciesInfo {
-  /// Scientific (Latin) name.
+  /// Scientific (Latin) name as queried.
   final String speciesName;
 
-  /// Common English name, e.g. "Species Of Frog".
+  /// Common English name, e.g. "Mali Screeching Frog".
   final String commonName;
 
   /// Taxonomic order, e.g. "Anura".
   final String? order;
 
-  /// Taxonomic family, e.g. "Eleutherodactylidae".
+  /// Taxonomic family, e.g. "Pyxicephalidae".
   final String? family;
 
-  /// Taxonomic genus, e.g. "Adelophryne".
+  /// Taxonomic genus, e.g. "Tomopterna".
   final String? genus;
 
-  /// Broad taxonomy summary string, e.g. "Anura · Eleutherodactylidae".
+  /// Broad taxonomy summary string, e.g. "Anura · Pyxicephalidae".
   final String taxonomy;
 
   /// Habitat description.
@@ -30,16 +32,13 @@ class SpeciesInfo {
   /// Plain-text description / overview paragraph.
   final String overview;
 
-  /// Reference sequence count in eDNA database.
-  final int? sequenceCount;
-
   /// URL to a representative photo (from iNaturalist or Wikipedia).
   final String? photoUrl;
 
   /// Direct link to the Wikipedia article if available.
   final String? wikipediaUrl;
 
-  /// Primary data source name: e.g. "eDNA Database", "iNaturalist", or "Wikipedia".
+  /// Primary data source name: e.g. "eDNA Model Output", "iNaturalist", or "Wikipedia".
   final String dataSource;
 
   const SpeciesInfo({
@@ -53,45 +52,36 @@ class SpeciesInfo {
     this.geographicRange,
     required this.conservationStatus,
     required this.overview,
-    this.sequenceCount,
     this.photoUrl,
     this.wikipediaUrl,
     required this.dataSource,
   });
 
-  factory SpeciesInfo.fromEdnaBackendJson(Map<String, dynamic> json, {String? photoUrl, String? wikipediaUrl}) {
-    final species = json['species'] as String? ?? 'Unknown Species';
-    final common = json['common_name'] as String? ?? species;
-    final orderStr = json['order'] as String?;
-    final familyStr = json['family'] as String?;
-    final genusStr = json['genus'] as String?;
-    final habitatStr = json['habitat'] as String?;
-    final geoRangeStr = json['geographic_range'] as String?;
-    final statusStr = json['conservation_status'] as String? ?? 'Not Evaluated';
-    final descStr = json['description'] as String? ?? '';
-    final seqCount = json['sequence_count'] is int ? json['sequence_count'] as int : int.tryParse(json['sequence_count']?.toString() ?? '');
-
+  factory SpeciesInfo.fromSpeciesDetails(
+    SpeciesDetails details, {
+    String? photoUrl,
+    String? wikipediaUrl,
+  }) {
     final taxParts = <String>[];
-    if (orderStr != null && orderStr.isNotEmpty) taxParts.add(orderStr);
-    if (familyStr != null && familyStr.isNotEmpty) taxParts.add(familyStr);
-    if (genusStr != null && genusStr.isNotEmpty && !taxParts.contains(genusStr)) taxParts.add(genusStr);
+    if (details.order.isNotEmpty) taxParts.add(details.order);
+    if (details.family.isNotEmpty) taxParts.add(details.family);
+    if (details.genus.isNotEmpty && !taxParts.contains(details.genus)) taxParts.add(details.genus);
     final taxonomyCombined = taxParts.isNotEmpty ? taxParts.join(' · ') : 'Amphibia';
 
     return SpeciesInfo(
-      speciesName: species,
-      commonName: common,
-      order: orderStr,
-      family: familyStr,
-      genus: genusStr,
+      speciesName: details.species,
+      commonName: details.commonName.isNotEmpty ? details.commonName : details.species,
+      order: details.order.isNotEmpty ? details.order : null,
+      family: details.family.isNotEmpty ? details.family : null,
+      genus: details.genus.isNotEmpty ? details.genus : null,
       taxonomy: taxonomyCombined,
-      habitat: habitatStr,
-      geographicRange: geoRangeStr,
-      conservationStatus: statusStr,
-      overview: descStr.isNotEmpty ? descStr : 'No detailed description available.',
-      sequenceCount: seqCount,
+      habitat: details.habitat.isNotEmpty ? details.habitat : null,
+      geographicRange: details.geographicRange.isNotEmpty ? details.geographicRange : null,
+      conservationStatus: details.conservationStatus.isNotEmpty ? details.conservationStatus : 'Not Evaluated',
+      overview: details.description.isNotEmpty ? details.description : 'No detailed description available.',
       photoUrl: photoUrl,
       wikipediaUrl: wikipediaUrl,
-      dataSource: 'eDNA Portal API',
+      dataSource: 'eDNA Model API',
     );
   }
 }
