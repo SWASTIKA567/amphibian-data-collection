@@ -6,6 +6,7 @@ import '../controllers/species_info_controller.dart';
 import '../models/edna_models.dart';
 import '../models/species_info.dart';
 import '../theme/app_theme.dart';
+import 'species_detail_screen.dart';
 
 class SpeciesInfoView extends ConsumerStatefulWidget {
   final String? initialSpecies;
@@ -422,12 +423,14 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: AppTheme.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
@@ -442,8 +445,7 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.black26,
                       borderRadius: BorderRadius.circular(10),
@@ -493,7 +495,44 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+
+        // Prominent Full Details Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: AppTheme.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.open_in_full_rounded, size: 18),
+            label: const Text(
+              'See Full Species Screen',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SpeciesDetailScreen(
+                    speciesName: desc.speciesName,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Taxonomy Breakdown (Order, Family, Genus)
+        _buildTaxonomyBreakdownCard(desc),
+
+        const SizedBox(height: 14),
 
         // Overview Section
         _buildInfoCard(
@@ -510,6 +549,24 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
           content: desc.conservationStatus,
           accentColor: Colors.amber.shade800,
         ),
+
+        if (desc.habitat != null && desc.habitat!.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _buildInfoCard(
+            icon: Icons.water_drop_rounded,
+            title: 'Habitat & Environment',
+            content: desc.habitat!,
+          ),
+        ],
+
+        if (desc.geographicRange != null && desc.geographicRange!.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _buildInfoCard(
+            icon: Icons.public_rounded,
+            title: 'Geographic Distribution',
+            content: desc.geographicRange!,
+          ),
+        ],
 
         if (desc.wikipediaUrl != null && desc.wikipediaUrl!.isNotEmpty) ...[
           const SizedBox(height: 14),
@@ -594,6 +651,112 @@ class _SpeciesInfoViewState extends ConsumerState<SpeciesInfoView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTaxonomyBreakdownCard(SpeciesInfo desc) {
+    String order = desc.order ?? '';
+    String family = desc.family ?? '';
+    String genus = desc.genus ?? '';
+
+    if (order.isEmpty || family.isEmpty || genus.isEmpty) {
+      final parts = desc.taxonomy.split('·').map((e) => e.trim()).toList();
+      if (order.isEmpty && parts.isNotEmpty) order = parts[0];
+      if (family.isEmpty && parts.length > 1) family = parts[1];
+      if (genus.isEmpty && parts.length > 2) genus = parts[2];
+      if (genus.isEmpty) {
+        final nameParts = desc.speciesName.split(' ');
+        genus = nameParts.isNotEmpty ? nameParts[0] : desc.speciesName;
+      }
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryGreen.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.account_tree_rounded, color: AppTheme.primaryGreen, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Taxonomic Classification',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _buildTaxonomicItemBox('Order', order, Icons.category_rounded),
+              const SizedBox(width: 8),
+              _buildTaxonomicItemBox('Family', family, Icons.biotech_rounded),
+              const SizedBox(width: 8),
+              _buildTaxonomicItemBox('Genus', genus, Icons.eco_rounded),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaxonomicItemBox(String label, String value, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.lightMintBackground,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 12, color: AppTheme.primaryGreen),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value.isNotEmpty ? value : 'Amphibia',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryDarkGreen,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ],
+        ),
       ),
     );
   }

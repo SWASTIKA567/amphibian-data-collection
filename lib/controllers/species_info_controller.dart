@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/edna_models.dart';
 import '../models/species_info.dart';
 import '../services/species_info_service.dart';
 
@@ -43,7 +44,10 @@ class SpeciesInfoController extends StateNotifier<SpeciesInfoState> {
 
   SpeciesInfoController(this._apiService) : super(SpeciesInfoState());
 
-  Future<void> selectSpeciesAndFetch(String speciesName) async {
+  Future<void> selectSpeciesAndFetch(
+    String speciesName, {
+    SpeciesDetails? speciesDetails,
+  }) async {
     final cleanName = speciesName.trim();
     if (cleanName.isEmpty) return;
 
@@ -52,15 +56,18 @@ class SpeciesInfoController extends StateNotifier<SpeciesInfoState> {
       errorMessage: null,
     );
 
-    await fetchDescription(cleanName);
+    await fetchDescription(cleanName, speciesDetails: speciesDetails);
   }
 
-  Future<void> fetchDescription(String speciesName) async {
+  Future<void> fetchDescription(
+    String speciesName, {
+    SpeciesDetails? speciesDetails,
+  }) async {
     final cleanName = speciesName.trim();
     if (cleanName.isEmpty) return;
 
-    // Check cache first
-    if (state.cache.containsKey(cleanName)) {
+    // Check cache first unless new speciesDetails are provided
+    if (speciesDetails == null && state.cache.containsKey(cleanName)) {
       state = state.copyWith(
         isLoading: false,
         activeSpecies: cleanName,
@@ -76,7 +83,10 @@ class SpeciesInfoController extends StateNotifier<SpeciesInfoState> {
     );
 
     try {
-      final description = await _apiService.fetchSpeciesInfo(cleanName);
+      final description = await _apiService.fetchSpeciesInfo(
+        cleanName,
+        directDetails: speciesDetails,
+      );
 
       final updatedCache = Map<String, SpeciesInfo>.from(state.cache);
       updatedCache[cleanName] = description;

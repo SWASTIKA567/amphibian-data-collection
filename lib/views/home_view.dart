@@ -6,17 +6,35 @@ import '../controllers/species_info_controller.dart';
 import '../models/edna_models.dart';
 import '../theme/app_theme.dart';
 import 'edna_input_view.dart';
-import 'main_navigation_screen.dart';
+import 'species_detail_screen.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
 
-  /// Navigate to Species Info tab and auto-fetch description for [speciesName]
-  void _navigateToSpeciesInfo(BuildContext context, WidgetRef ref, String speciesName) {
-    ref.read(speciesInfoControllerProvider.notifier).selectSpeciesAndFetch(speciesName);
-    ref.read(mainNavSpeciesProvider.notifier).state = speciesName;
-    ref.read(mainNavIndexProvider.notifier).state = 2;
+  /// Open full-screen Species Detail screen for comprehensive data
+  void _openSpeciesDetail(
+    BuildContext context,
+    WidgetRef ref,
+    String speciesName, {
+    SpeciesDetails? speciesDetails,
+    PredictionResponse? predictionResult,
+  }) {
+    ref
+        .read(speciesInfoControllerProvider.notifier)
+        .fetchDescription(speciesName, speciesDetails: speciesDetails);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpeciesDetailScreen(
+          speciesName: speciesName,
+          directDetails: speciesDetails,
+          predictionResult: predictionResult,
+        ),
+      ),
+    );
   }
+
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -377,7 +395,7 @@ class HomeView extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           InkWell(
-            onTap: () => _navigateToSpeciesInfo(context, ref, response.predictedSpecies),
+            onTap: () => _openSpeciesDetail(context, ref, response.predictedSpecies, speciesDetails: response.speciesDetails, predictionResult: response),
             borderRadius: BorderRadius.circular(8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -397,12 +415,23 @@ class HomeView extends ConsumerWidget {
               ],
             ),
           ),
+          if (response.speciesDetails != null && response.speciesDetails!.commonName.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              response.speciesDetails!.commonName,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryGreen,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           // Species Info Button
           GestureDetector(
-            onTap: () => _navigateToSpeciesInfo(context, ref, response.predictedSpecies),
+            onTap: () => _openSpeciesDetail(context, ref, response.predictedSpecies, speciesDetails: response.speciesDetails, predictionResult: response),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppTheme.primaryGreen, AppTheme.primaryDarkGreen],
@@ -410,24 +439,122 @@ class HomeView extends ConsumerWidget {
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.travel_explore_rounded, color: Colors.white, size: 16),
+                  Icon(Icons.info_outline_rounded, color: Colors.white, size: 17),
                   SizedBox(width: 6),
                   Text(
-                    'View Species Info',
+                    'See Full Details',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 15),
                 ],
               ),
             ),
           ),
+
+          // Render Extra API Outputs if available
+          if (response.speciesDetails != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.lightMintBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Taxonomy Chips Row
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      if (response.speciesDetails!.order.isNotEmpty)
+                        _buildDetailChip('Order', response.speciesDetails!.order),
+                      if (response.speciesDetails!.family.isNotEmpty)
+                        _buildDetailChip('Family', response.speciesDetails!.family),
+                      if (response.speciesDetails!.genus.isNotEmpty)
+                        _buildDetailChip('Genus', response.speciesDetails!.genus),
+                    ],
+                  ),
+                  if (response.speciesDetails!.conservationStatus.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(Icons.shield_rounded, size: 15, color: Colors.amber.shade800),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Status: ${response.speciesDetails!.conservationStatus}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (response.speciesDetails!.habitat.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.water_drop_rounded, size: 15, color: AppTheme.primaryGreen),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Habitat: ${response.speciesDetails!.habitat}',
+                            style: const TextStyle(fontSize: 12.5, color: AppTheme.textDark),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (response.speciesDetails!.geographicRange.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.public_rounded, size: 15, color: AppTheme.primaryGreen),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Range: ${response.speciesDetails!.geographicRange}',
+                            style: const TextStyle(fontSize: 12.5, color: AppTheme.textDark),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (response.speciesDetails!.description.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      response.speciesDetails!.description,
+                      style: const TextStyle(fontSize: 12.5, color: AppTheme.textMuted, height: 1.35),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 
@@ -610,32 +737,67 @@ class HomeView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   if (res != null) ...[
-                    GestureDetector(
-                      onTap: () => _navigateToSpeciesInfo(context, ref, res.predictedSpecies),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              res.predictedSpecies,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryDarkGreen,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                res.predictedSpecies,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryDarkGreen,
+                                ),
                               ),
+                              if (res.speciesDetails != null && res.speciesDetails!.commonName.isNotEmpty)
+                                Text(
+                                  res.speciesDetails!.commonName,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.primaryGreen,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Confidence: ${(res.confidence * 100).toStringAsFixed(1)}%',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => _openSpeciesDetail(
+                            context,
+                            ref,
+                            res.predictedSpecies,
+                            speciesDetails: res.speciesDetails,
+                            predictionResult: res,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: AppTheme.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen, size: 18),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Confidence: ${(res.confidence * 100).toStringAsFixed(1)}%',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textMuted,
-                      ),
+                          icon: const Icon(Icons.info_outline_rounded, size: 14),
+                          label: const Text(
+                            'See Details',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                   ] else ...[
                     Text(
@@ -814,24 +976,45 @@ class HomeView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   if (res != null)
-                    GestureDetector(
-                      onTap: () => _navigateToSpeciesInfo(context, ref, res.predictedSpecies),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Predicted: ${res.predictedSpecies}',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryDarkGreen,
-                              ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Predicted: ${res.predictedSpecies}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDarkGreen,
                             ),
                           ),
-                          const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen, size: 18),
-                        ],
-                      ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => _openSpeciesDetail(
+                            context,
+                            ref,
+                            res.predictedSpecies,
+                            speciesDetails: res.speciesDetails,
+                            predictionResult: res,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: AppTheme.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: const Icon(Icons.info_outline_rounded, size: 14),
+                          label: const Text(
+                            'See Details',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     )
                   else
                     const Text(
@@ -1001,6 +1184,21 @@ class HomeView extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDetailChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.borderGreen),
+      ),
+      child: Text(
+        '$label: $value',
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDarkGreen),
       ),
     );
   }
