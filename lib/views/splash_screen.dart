@@ -24,46 +24,43 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1800),
     );
 
-    // Logo fades and scales in during the first half
     _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
       ),
     );
 
-    _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
+    _logoScale = Tween<double>(begin: 0.75, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
       ),
     );
 
-    // Text fades and slides up in the second half
     _textFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
+        curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
       ),
     );
 
     _textSlide = Tween<Offset>(
-      begin: const Offset(0, 0.4),
+      begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
+        curve: const Interval(0.4, 0.8, curve: Curves.easeOutCubic),
       ),
     );
 
     _controller.forward();
 
-    // Navigate to AuthWrapper after splash duration
-    Timer(const Duration(milliseconds: 3000), () {
+    Timer(const Duration(milliseconds: 2800), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -71,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(opacity: animation, child: child);
             },
-            transitionDuration: const Duration(milliseconds: 600),
+            transitionDuration: const Duration(milliseconds: 500),
           ),
         );
       }
@@ -92,72 +89,85 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo
+            // ── Logo mark ──
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _logoFade,
-                  child: ScaleTransition(
-                    scale: _logoScale,
-                    child: child,
-                  ),
+                  child: ScaleTransition(scale: _logoScale, child: child),
                 );
               },
-              child: Image.asset(
-                'assets/images/logo.jpg',
-                width: 200,
-                height: 200,
-                fit: BoxFit.contain,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(
+                  Icons.eco_rounded,
+                  size: 44,
+                  color: AppTheme.white,
+                ),
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
-            // BIOTRACE text
+            // ── App name & tagline ──
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _textFade,
-                  child: SlideTransition(
-                    position: _textSlide,
-                    child: child,
-                  ),
+                  child: SlideTransition(position: _textSlide, child: child),
                 );
               },
-              child: const Text(
-                'BIOTRACE',
-                style: TextStyle(
-                  fontFamily: 'BerlinSansFB',
-                  fontSize: 38,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryDarkGreen,
-                  letterSpacing: 6,
-                ),
+              child: Column(
+                children: [
+                  const Text(
+                    'BIOTRACE',
+                    style: TextStyle(
+                      fontFamily: 'BerlinSansFB',
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryDarkGreen,
+                      letterSpacing: 8,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Amphibian Data Collection',
+                    style: TextStyle(
+                      fontFamily: 'BerlinSansFB',
+                      fontSize: 12,
+                      color: AppTheme.textMuted.withValues(alpha: 0.85),
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 64),
 
-            // Subtle tagline
+            // ── Subtle loading indicator ──
             AnimatedBuilder(
               animation: _controller,
-              builder: (context, child) {
-                return FadeTransition(
-                  opacity: _textFade,
-                  child: child,
+              builder: (context, _) {
+                return Opacity(
+                  opacity: _textFade.value,
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.5),
+                    ),
+                  ),
                 );
               },
-              child: Text(
-                'Amphibian Data Collection',
-                style: TextStyle(
-                  fontFamily: 'BerlinSansFB',
-                  fontSize: 13,
-                  color: AppTheme.textMuted,
-                  letterSpacing: 2.5,
-                ),
-              ),
             ),
           ],
         ),

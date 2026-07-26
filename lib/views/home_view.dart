@@ -49,34 +49,37 @@ class HomeView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppTheme.lightMintBackground,
       appBar: AppBar(
+        backgroundColor: AppTheme.lightMintBackground,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
         title: const Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.eco_rounded, color: AppTheme.white, size: 24),
+            Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 22),
             SizedBox(width: 8),
             Text(
-              'eDNA Species Portal',
+              'BioTrace',
               style: TextStyle(
-                color: AppTheme.white,
-                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                letterSpacing: -0.3,
               ),
             ),
           ],
         ),
-        backgroundColor: AppTheme.primaryGreen,
-        centerTitle: true,
-        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppTheme.white),
+            icon: const Icon(Icons.logout_outlined,
+                color: AppTheme.textMuted, size: 20),
             tooltip: 'Log Out',
             onPressed: () {
               ref.read(authControllerProvider.notifier).signOut();
             },
           ),
+          const SizedBox(width: 4),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -85,11 +88,9 @@ class HomeView extends ConsumerWidget {
         },
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: AppTheme.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'New Input',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_rounded, size: 26),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -116,36 +117,46 @@ class HomeView extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Analysis Output',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  const Text(
+                    'Analysis Output',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textDark,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
+                  GestureDetector(
+                    onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const EdnaInputView()),
+                        MaterialPageRoute(
+                            builder: (context) => const EdnaInputView()),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: AppTheme.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.biotech_outlined,
+                              size: 16, color: AppTheme.primaryGreen),
+                          SizedBox(width: 5),
+                          Text(
+                            'New Input',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    icon: const Icon(Icons.biotech_rounded, size: 18),
-                    label: const Text('Open Input Screen'),
                   ),
                 ],
               ),
@@ -164,12 +175,13 @@ class HomeView extends ConsumerWidget {
                 const Text(
                   'Recent Analyses',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppTheme.textDark,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 _buildHistoryList(ref, ednaState.history, activeAnalysis),
               ],
             ],
@@ -188,82 +200,59 @@ class HomeView extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryGreen.withValues(alpha: 0.08),
-            AppTheme.accentMint,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.5)),
+        color: AppTheme.accentMint,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppTheme.borderGreen.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              isRestored ? Icons.restore_rounded : Icons.history_edu_rounded,
-              color: AppTheme.primaryGreen,
-              size: 26,
-            ),
+          Icon(
+            isRestored ? Icons.restore_rounded : Icons.history_edu_rounded,
+            color: AppTheme.primaryGreen,
+            size: 22,
           ),
-          const SizedBox(width: 14),
-          // Text
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isRestored ? 'Session Progress Restored' : 'Analysis Progress',
+                  isRestored ? 'Session Restored' : 'Analysis Progress',
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                     color: AppTheme.primaryDarkGreen,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   count == 0
-                      ? 'No analyses saved yet. Run your first eDNA sequence.'
-                      : '$count saved ${count == 1 ? "analysis" : "analyses"} — progress is saved across sessions.',
+                      ? 'No analyses yet — run your first eDNA sequence.'
+                      : '$count saved ${count == 1 ? "analysis" : "analyses"} · synced across sessions.',
                   style: const TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.textDark,
-                    height: 1.35,
+                    fontSize: 12,
+                    color: AppTheme.textMuted,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          // Badge
           if (isRestored)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppTheme.primaryGreen,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$count',
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                   color: AppTheme.white,
                 ),
               ),
@@ -282,71 +271,63 @@ class HomeView extends ConsumerWidget {
     AsyncValue<List<dynamic>> projectsAsync,
   ) {
     final publicCount = projectsAsync.when(
-      data: (list) => list.where((p) => (p as dynamic).isPublic == true).length,
+      data: (list) =>
+          list.where((p) => (p as dynamic).isPublic == true).length,
       loading: () => 0,
       error: (_, _) => 0,
     );
 
     return GestureDetector(
       onTap: () {
-        // Switch to Community Projects tab (index 3)
         ref.read(mainNavIndexProvider.notifier).state = 3;
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderGreen.withValues(alpha: 0.4)),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: AppTheme.borderGreen.withValues(alpha: 0.5), width: 1),
         ),
         child: Row(
           children: [
-            // Icon
             Container(
-              padding: const EdgeInsets.all(12),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryGreen, AppTheme.primaryDarkGreen],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(14),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.hub_rounded, color: AppTheme.white, size: 24),
+              child: const Icon(Icons.hub_rounded,
+                  color: AppTheme.primaryGreen, size: 20),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Open Research Community',
+                    'Research Community',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppTheme.primaryDarkGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: AppTheme.textDark,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
-                    '$publicCount open projects available · Share your research, sequences & files',
+                    '$publicCount open projects · Share sequences & files',
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppTheme.textMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGreen, size: 16),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppTheme.primaryGreen, size: 20),
           ],
         ),
       ),
@@ -359,34 +340,27 @@ class HomeView extends ConsumerWidget {
   Widget _buildHeaderCard(WidgetRef ref, AsyncValue userProfileAsync, dynamic firebaseUser) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryGreen, AppTheme.primaryDarkGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: AppTheme.primaryGreen,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 28,
-            backgroundColor: AppTheme.white,
-            child: Icon(
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
               Icons.person_rounded,
-              size: 32,
-              color: AppTheme.primaryGreen,
+              size: 24,
+              color: AppTheme.white,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,8 +368,9 @@ class HomeView extends ConsumerWidget {
                 Text(
                   'Researcher Workspace',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    color: AppTheme.white.withValues(alpha: 0.7),
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -403,14 +378,15 @@ class HomeView extends ConsumerWidget {
                   data: (profile) => Text(
                     profile?.name ?? firebaseUser?.displayName ?? 'Researcher',
                     style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.white,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   loading: () => const SizedBox(
-                    height: 18,
-                    width: 18,
+                    height: 16,
+                    width: 16,
                     child: CircularProgressIndicator(
                       color: AppTheme.white,
                       strokeWidth: 2,
@@ -419,10 +395,31 @@ class HomeView extends ConsumerWidget {
                   error: (err, stack) => Text(
                     firebaseUser?.email ?? 'Researcher',
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.white,
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppTheme.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.eco_outlined, color: AppTheme.white, size: 14),
+                SizedBox(width: 4),
+                Text(
+                  'Active',
+                  style: TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],

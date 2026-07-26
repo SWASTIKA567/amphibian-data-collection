@@ -16,7 +16,8 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
@@ -33,27 +34,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final currentIndex = ref.watch(mainNavIndexProvider);
     final pendingSpecies = ref.watch(mainNavSpeciesProvider);
 
-    // Listen to nav index changes and animate page
     ref.listen<int>(mainNavIndexProvider, (prev, next) {
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           next,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 280),
           curve: Curves.easeInOut,
         );
       }
     });
 
     return Scaffold(
+      backgroundColor: AppTheme.lightMintBackground,
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
           const HomeView(),
           const EdnaInputView(),
-          SpeciesInfoView(
-            initialSpecies: pendingSpecies,
-          ),
+          SpeciesInfoView(initialSpecies: pendingSpecies),
           const ProjectsCommunityView(),
         ],
       ),
@@ -62,62 +61,95 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   Widget _buildBottomNav(int currentIndex) {
+    const items = [
+      _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Results'),
+      _NavItem(icon: Icons.biotech_outlined, activeIcon: Icons.biotech_rounded, label: 'eDNA'),
+      _NavItem(icon: Icons.travel_explore_outlined, activeIcon: Icons.travel_explore_rounded, label: 'Species'),
+      _NavItem(icon: Icons.hub_outlined, activeIcon: Icons.hub_rounded, label: 'Community'),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.borderGreen.withValues(alpha: 0.4),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      child: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          ref.read(mainNavIndexProvider.notifier).state = index;
-        },
-        backgroundColor: AppTheme.white,
-        indicatorColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
-        surfaceTintColor: Colors.transparent,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        animationDuration: const Duration(milliseconds: 300),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
-              color: currentIndex == 0 ? AppTheme.primaryGreen : AppTheme.textMuted,
-            ),
-            selectedIcon: const Icon(Icons.home_rounded, color: AppTheme.primaryGreen),
-            label: 'Results',
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final item = items[index];
+              final isSelected = index == currentIndex;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    ref.read(mainNavIndexProvider.notifier).state = index;
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Icon with pill indicator
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppTheme.primaryGreen.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            isSelected ? item.activeIcon : item.icon,
+                            size: 22,
+                            color: isSelected
+                                ? AppTheme.primaryGreen
+                                : AppTheme.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? AppTheme.primaryGreen
+                                : AppTheme.textMuted,
+                          ),
+                          child: Text(item.label),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.biotech_outlined,
-              color: currentIndex == 1 ? AppTheme.primaryGreen : AppTheme.textMuted,
-            ),
-            selectedIcon: const Icon(Icons.biotech_rounded, color: AppTheme.primaryGreen),
-            label: 'eDNA Input',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.travel_explore_outlined,
-              color: currentIndex == 2 ? AppTheme.primaryGreen : AppTheme.textMuted,
-            ),
-            selectedIcon: const Icon(Icons.travel_explore_rounded, color: AppTheme.primaryGreen),
-            label: 'Species Info',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.hub_outlined,
-              color: currentIndex == 3 ? AppTheme.primaryGreen : AppTheme.textMuted,
-            ),
-            selectedIcon: const Icon(Icons.hub_rounded, color: AppTheme.primaryGreen),
-            label: 'Community',
-          ),
-        ],
+        ),
       ),
     );
   }
+}
+
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const _NavItem(
+      {required this.icon,
+      required this.activeIcon,
+      required this.label});
 }
